@@ -9,6 +9,10 @@ interactive chat.
 See [SOUL.md](app/SOUL.md) for who the agent is and how it's meant to speak. This file
 covers how the project is built and how to run it.
 
+## Pitch deck
+
+[View the Mentor pitch deck](https://canva.link/dcm7janst3k4bc9)
+
 ## What it does
 
 | Ritual | Trigger | What it produces |
