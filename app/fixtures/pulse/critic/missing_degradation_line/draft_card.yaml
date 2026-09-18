@@ -1,0 +1,9 @@
+prompt_id: pulse_writer.v1
+temperature: 0
+# context.yaml says calendar is degraded, but the draft never says so.
+degradation_line: null
+items:
+  - item_id: MENT-214
+    title: "Fix flaky roster test"
+    why_now: "Due today"
+    action: "Unblock Sarah on MENT-214"

@@ -1,0 +1,58 @@
+name: degraded_source
+description: >
+  Calendar is unauthorized and Linear is stale — the pulse must still
+  deliver on what's healthy (Slack) and name the degraded sources
+  (pulse.md "degrade honestly" rule), never silently ship a thinner pulse
+  without saying so.
+
+owner:
+  id: usr_amal
+  tz: Europe/Paris
+  pulse_fire_time_local: "08:30"
+  late_cutoff_local: "21:00"
+
+now: "2026-08-07T07:00:00+02:00"
+
+people:
+  - id: person_sarah
+    canonical_name: Sarah Ben Youssef
+    primary_email: sarah@acme.com
+    is_self: false
+
+events: []
+
+work_items:
+  - external_id: MENT-214
+    source: linear
+    title: "Fix flaky roster test"
+    status: blocked
+    due_at: "2026-08-07T18:00:00+02:00"
+    updated_at: "2026-08-06T16:00:00+02:00"
+    actor_reference_key: "linear:sarah@acme.com"
+
+messages:
+  - external_id: "1699999999.000100"
+    source: slack
+    channel: C0123
+    sent_at: "2026-08-07T06:40:00+02:00"
+    is_dm: true
+    body_ref: "fixture://slack/1699999999.000100"
+    actor_reference_key: "slack:sarah@acme.com"
+
+commitments: []
+
+unhealthy_sources:
+  calendar:
+    status: unauthorized
+  linear:
+    status: error
+    stale_as_of: "2026-08-06T20:00:00+02:00"
+
+expected:
+  # calendar and linear are unhealthy, so seed never ingests MENT-214 —
+  # L5 has nothing from either source to score.
+  shortlist_min: 0
+  shortlist_max: 0
+  focus_candidates: []
+  degraded_sources: [calendar, linear]
+  owed_count: 0

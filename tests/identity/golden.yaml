@@ -1,0 +1,64 @@
+# tests/identity/golden.yaml
+# Adversarial by construction (design spec §8). Two gates when this file is
+# scored by test_matchers_golden.py: precision >= 0.99, false_merge_count == 0.
+# One owner's roster only — golden.yaml tests matching logic, not tenancy;
+# tenancy is tested separately in test_invariants.py.
+roster:
+  - id: p_sarah
+    canonical_name: "Sarah Ben Youssef"
+    primary_email: "sarah.benyoussef@acme.com"
+    alias_emails: ["s.benyoussef@acme.io"]
+    is_active: true
+  - id: p_sarah2
+    canonical_name: "Sarah Ben Ali"
+    primary_email: "sarah.benali@acme.com"
+    is_active: true
+  - id: p_mohamed1
+    canonical_name: "Mohamed Amine"
+    primary_email: "mohamed.amine@acme.com"
+    is_active: true
+  - id: p_mohamed2
+    canonical_name: "Mohamed Amine"  # duplicate display name, on purpose
+    primary_email: "mohamed.amine2@acme.com"
+    is_active: true
+  - id: p_contractor
+    canonical_name: "Jamie Ext"
+    primary_email: "jamie@vendor.com"
+    is_active: true
+
+cases:
+  - name: primary_email_exact_match
+    reference: {source: slack, external_id: "U1", handle: "sarah.dev", email: "sarah.benyoussef@acme.com"}
+    expect: {kind: resolved, person_id: p_sarah, confidence: verified}
+
+  - name: alias_domain_email_match
+    reference: {source: linear, external_id: "L1", handle: null, email: "s.benyoussef+linear@acme.io"}
+    expect: {kind: resolved, person_id: p_sarah, confidence: verified}
+
+  - name: duplicate_display_name_never_auto_links
+    reference: {source: calendar, external_id: null, handle: null, display_name: "Mohamed Amine"}
+    expect: {kind: unattributed}   # margin=0 between p_mohamed1 and p_mohamed2
+
+  - name: unique_exact_name_asks_not_auto_links
+    reference: {source: calendar, external_id: null, handle: null, display_name: "Sarah Ben Youssef"}
+    expect: {kind: unconfirmed, top_person_id: p_sarah}   # tier 3 never auto-links
+
+  - name: handle_digit_suffix_is_a_different_person_by_default
+    reference: {source: slack, external_id: "U9", handle: "sbenali2"}
+    # sbenali (no such handle in this roster) vs sbenali2 — must not silently
+    # collide via the reference_key; scored as its own candidate set
+    expect: {kind: unattributed}
+
+  - name: contractor_ext_handle_does_not_false_merge_to_similar_name
+    reference: {source: slack, external_id: "U10", handle: "jamie_ext"}
+    expect: {kind: unconfirmed, top_person_id: p_contractor}
+
+  - name: unicode_near_duplicate_folds_via_nfkc
+    reference: {source: calendar, external_id: null, handle: null, display_name: "Şarah Ben Youssef"}
+    expect: {kind: unconfirmed, top_person_id: p_sarah}
+
+  - name: handle_matches_wrong_persons_name_stays_unattributed
+    # "sbenali" as a handle superficially resembles "Sarah Ben Ali" by prefix,
+    # but there is no real evidence — must not false-merge
+    reference: {source: slack, external_id: "U11", handle: "totallyunrelated"}
+    expect: {kind: unattributed}

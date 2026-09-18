@@ -1,0 +1,10 @@
+{
+  "who": ["Alex Manager"],
+  "why_now": "Recurring weekly 1:1.",
+  "talking_points": [
+    {"text": "Model-invented point that should be overridden by the rolling agenda", "source_link": "https://example.com/model-guess"}
+  ],
+  "promised_and_not_delivered": [],
+  "suggested_opener": null,
+  "short_version": false
+}

@@ -1,0 +1,65 @@
+name: series_suppression
+description: >
+  The one legitimate cron/pull divergence (decision 3 of the morning-pulse
+  plan): the recurring standup is series-muted, so cron must omit it while
+  pull ignores the mute. Every other item must match between triggers.
+
+owner:
+  id: usr_amal
+  tz: Europe/Paris
+  pulse_fire_time_local: "08:30"
+  late_cutoff_local: "21:00"
+
+now: "2026-08-07T07:00:00+02:00"
+
+people:
+  - id: person_sarah
+    canonical_name: Sarah Ben Youssef
+    primary_email: sarah@acme.com
+    is_self: false
+
+events:
+  - external_id: evt-1
+    source: calendar
+    title: "1:1 with Sarah"
+    starts_at: "2026-08-07T09:00:00+02:00"
+    ends_at: "2026-08-07T09:30:00+02:00"
+    status: confirmed
+    actor_reference_key: "calendar:sarah@acme.com"
+  - external_id: evt-2
+    source: calendar
+    title: "Team standup"
+    starts_at: "2026-08-07T10:00:00+02:00"
+    ends_at: "2026-08-07T10:15:00+02:00"
+    status: confirmed
+    series_id: "series:standup"
+    actor_reference_key: "calendar:standup@acme.com"
+
+work_items:
+  - external_id: MENT-214
+    source: linear
+    title: "Fix flaky roster test"
+    status: blocked
+    due_at: "2026-08-07T18:00:00+02:00"
+    updated_at: "2026-08-06T16:00:00+02:00"
+    actor_reference_key: "linear:sarah@acme.com"
+
+messages: []
+
+commitments: []
+
+suppressions:
+  - scope: series
+    target_ref: "series:standup"
+    reason: "user muted the standup series"
+    expires_at: "2026-09-01T00:00:00+02:00"
+
+expected:
+  shortlist_min: 3
+  shortlist_max: 3
+  focus_candidates: [evt-1, MENT-214]
+  degraded_sources: []
+  owed_count: 0
+  cron_only_removals:
+    - item_id: evt-2
+      reason: "series_suppression:series:standup"

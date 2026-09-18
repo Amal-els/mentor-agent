@@ -1,0 +1,37 @@
+name: clear_day
+description: >
+  Nothing on the calendar, no open work items. Only the single oldest
+  commitment should surface — the "day is clear" edge case from pulse.md.
+
+owner:
+  id: usr_amal
+  tz: Europe/Paris
+  pulse_fire_time_local: "08:30"
+  late_cutoff_local: "21:00"
+
+now: "2026-08-08T07:00:00+02:00"
+
+people:
+  - id: person_sarah
+    canonical_name: Sarah Ben Youssef
+    primary_email: sarah@acme.com
+    is_self: false
+
+events: []
+work_items: []
+messages: []
+
+commitments:
+  - description: "Send Sarah the design doc review"
+    promised_to_person_id: person_sarah
+    promised_at: "2026-08-05T10:00:00+02:00"
+    due_at: "2026-08-06T18:00:00+02:00"
+    status: open
+    source_reference_key: "slack:msg-old-1"
+
+expected:
+  shortlist_min: 0
+  shortlist_max: 0
+  focus_candidates: []
+  degraded_sources: []
+  owed_count: 1

@@ -1,0 +1,20 @@
+name: tied_items
+description: >
+  Two items, identical scores — the minimal tie-break case. Earlier item in
+  the shortlist wins (stable sort), never a coin flip.
+
+shortlist:
+  - item_id: evt-x
+    score: 6.0
+    score_terms:
+      has_deadline: true
+      due_today: true
+      person_waiting: "Sarah Ben Youssef"
+  - item_id: evt-y
+    score: 6.0
+    score_terms:
+      has_deadline: true
+      due_today: true
+      person_waiting: "Marc Dubois"
+
+expected_ordered_ids: [evt-x, evt-y]

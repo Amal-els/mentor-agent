@@ -1,0 +1,14 @@
+prompt_id: pulse_writer.v1
+temperature: 0
+degradation_line: null
+items:
+  - item_id: evt-1
+    title: "1:1 with Sarah Ben Youssef"
+    # "Marc" appears nowhere in context.yaml's shortlist or score_terms —
+    # the writer invented a name (a claim absent from the context).
+    why_now: "Marc is waiting on this before the design review"
+    action: "Review your notes before 9:00"
+  - item_id: MENT-214
+    title: "Fix flaky roster test"
+    why_now: "Due today"
+    action: "Unblock Sarah on MENT-214"

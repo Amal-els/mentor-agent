@@ -1,0 +1,4 @@
+verdict: revise
+reasons:
+  - item_id: MENT-214
+    reason: "focus item has no why_now"

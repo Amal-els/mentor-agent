@@ -1,0 +1,12 @@
+items:
+  - id: item-1
+    text: "unblock the CI flake"
+    source: jira
+    visibility: shared
+    status: open
+pending_consent_items:
+  - id: item-2
+    text: "revisit the roadmap"
+    source: manual
+    visibility: shared
+    status: pending_consent

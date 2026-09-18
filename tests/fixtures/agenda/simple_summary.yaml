@@ -1,0 +1,12 @@
+items:
+  - id: item-1
+    text: "unblock the CI flake"
+    source: jira
+    visibility: shared
+    status: open
+  - id: item-2
+    text: "send the deck"
+    source: commitment_ledger
+    visibility: shared
+    status: open
+pending_consent_items: []

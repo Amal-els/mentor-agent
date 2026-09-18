@@ -1,0 +1,4 @@
+verdict: revise
+reasons:
+  - item_id: evt-1
+    reason: "why_now names 'Marc Dubois', which is not this item's person_waiting"

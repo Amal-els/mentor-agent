@@ -1,0 +1,12 @@
+prompt_id: pulse_writer.v1
+temperature: 0
+degradation_line: null
+items:
+  - item_id: evt-1
+    title: "1:1 with Sarah Ben Youssef"
+    why_now: "Sarah Ben Youssef is waiting on this"
+    action: "Review your notes before 9:00"
+  - item_id: MENT-214
+    title: "Fix flaky roster test"
+    why_now: "Due today"
+    action: "Unblock Sarah on MENT-214"

@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mentor Agent</title>
+  <meta name="description" content="Mentor Agent " />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+
+<body>
+  <!-- ── Login Overlay ── -->
+  <div class="login-overlay" id="login-overlay">
+    <div class="login-card">
+
+      <!-- Sign-in form -->
+      <div id="login-view">
+        <h2>Sign in</h2>
+        <p class="section-desc">Sign in with your email and access secret. If you are not in the Notion workspace yet,
+          ask an admin to invite you first.</p>
+        <form id="form-login">
+          <div class="form-group">
+            <label for="login-email">Email</label>
+            <input type="email" id="login-email" class="select-input" autocomplete="username" required />
+          </div>
+          <div class="form-group">
+            <label for="login-secret">Secret</label>
+            <input type="password" id="login-secret" class="select-input" autocomplete="current-password" required />
+          </div>
+          <button type="submit" class="btn-secondary full-width" id="btn-login">
+            <span id="login-btn-text">Sign in</span>
+            <div class="spinner" id="login-spinner" style="display: none;"></div>
+          </button>
+          <p class="login-error" id="login-error" style="display: none;"></p>
+        </form>
+        <p class="login-footnote"><a href="#" id="link-request-setup">Don't have a secret yet? Get a setup link by
+            email</a></p>
+      </div>
+
+      <!-- Request-setup-link form -->
+      <div id="request-setup-view" style="display: none;">
+        <h2>Get a setup link</h2>
+        <p class="section-desc">Already part of the team? Enter your email and we'll send a one-time link to get your
+          access secret. Not in the Notion workspace yet? Ask an admin to invite you there first — you're added here
+          automatically once you are, and can request a setup link right after.</p>
+        <form id="form-request-setup">
+          <div class="form-group">
+            <label for="setup-request-email">Email</label>
+            <input type="email" id="setup-request-email" class="select-input" required />
+          </div>
+          <button type="submit" class="btn-secondary full-width" id="btn-request-setup">
+            <span id="request-setup-btn-text">Send setup link</span>
+            <div class="spinner" id="request-setup-spinner" style="display: none;"></div>
+          </button>
+        </form>
+        <p class="login-footnote"><a href="#" id="link-back-to-login">Back to sign in</a></p>
+        <p class="login-success" id="request-setup-success" style="display: none;">If that email is registered, check
+          your inbox for a setup link (expires in 24 hours). Nothing arriving? You're likely not in the Notion workspace
+          yet — ask an admin to invite you.</p>
+      </div>
+
+      <!-- Setup-token redemption result -->
+      <div id="setup-complete-view" style="display: none;">
+        <h2>Your access secret</h2>
+        <p class="section-desc">Save this now — it won't be shown again. You'll need it to sign in.</p>
+        <div class="setup-secret-box" id="setup-secret-box"></div>
+        <button type="button" class="btn-secondary full-width" id="btn-copy-secret">Copy secret</button>
+        <button type="button" class="btn-secondary full-width" id="btn-continue-to-login"
+          style="margin-top: 8px;">Continue to sign in</button>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="app-container" id="app-container" style="display: none;">
+
+    <!-- ── Header ── -->
+    <header class="app-header">
+      <div class="header-brand">
+        <svg class="brand-mark" width="20" height="20" viewBox="0 0 24 24" fill="none"
+          xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2V5" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          <path d="M4 11C4 7.134 7.134 4 11 4H13C16.866 4 20 7.134 20 11V14C20 17.866 16.866 21 13 21H11C7.134 21 4 17.866 4 14V11Z" stroke="currentColor" stroke-width="1.8" />
+          <circle cx="9" cy="11.5" r="1.75" fill="currentColor" />
+          <circle cx="15" cy="11.5" r="1.75" fill="currentColor" />
+          <path d="M9.5 16C10.3 16.7 11.1 17 12 17C12.9 17 13.7 16.7 14.5 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+          <path d="M1.5 11.5V13.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" />
+          <path d="M22.5 11.5V13.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" />
+        </svg>
+        <div class="brand-text">
+          <h1>Mentor Agent</h1>
+          <span class="brand-subtitle">Manage &amp; report your work</span>
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <div class="status-pill" id="status-pill">
+          <span class="pulse-dot"></span>
+          <span id="status-text">Live syncing</span>
+        </div>
+        <button type="button" id="checklist-chip" class="checklist-chip" style="display: none;" aria-haspopup="dialog">
+          <span class="checklist-chip-icon">☑</span>
+          <span id="checklist-chip-text">0 tasks left</span>
+        </button>
+        <button type="button" id="meetings-chip" class="checklist-chip meetings-chip" style="display: none;"
+          aria-haspopup="dialog">
+          <span class="checklist-chip-icon">🗓️</span>
+          <span id="meetings-chip-text">0 meetings today</span>
+        </button>
+        <div class="account-indicator" id="account-indicator">
+          <span id="account-label"></span>
+          <button id="btn-preferences" class="btn-icon" title="Preferences" aria-label="Preferences">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path
+                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z">
+              </path>
+            </svg>
+          </button>
+          <button id="btn-logout" class="btn-icon" title="Log out" aria-label="Log out">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div class="login-overlay modal-overlay" id="preferences-overlay" style="display: none;">
+      <div class="login-card">
+        <h2>Preferences</h2>
+        <p class="login-footnote" style="margin-top: 0;">Your own schedule settings — timezone, morning pulse time, and
+          late-response cutoff.</p>
+        <form id="form-preferences">
+          <div class="form-group">
+            <label for="pref-tz">Timezone (IANA name)</label>
+            <input type="text" id="pref-tz" class="select-input" placeholder="America/New_York" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label for="pref-pulse-time">Morning pulse time</label>
+            <input type="time" id="pref-pulse-time" class="select-input">
+          </div>
+          <div class="form-group">
+            <label for="pref-cutoff-time">Late-response cutoff</label>
+            <input type="time" id="pref-cutoff-time" class="select-input">
+          </div>
+          <p class="login-error" id="preferences-error" style="display: none;"></p>
+          <p class="login-success" id="preferences-success" style="display: none;">Preferences saved.</p>
+          <div class="preferences-actions">
+            <button type="button" id="btn-preferences-cancel" class="btn-secondary">Cancel</button>
+            <button type="submit" id="btn-preferences-save" class="btn-primary">
+              <span id="preferences-save-btn-text">Save</span>
+              <div id="preferences-save-spinner" class="spinner" style="display: none;"></div>
+            </button>
+          </div>
+        </form>
+
+        <div class="preferences-divider"></div>
+
+        <h2>Connected accounts</h2>
+        <p class="login-footnote" style="margin-top: 0;">Link your own Gmail/Calendar/Docs so your pulse and dossiers
+          pull from your account, not a shared one.</p>
+        <div id="google-connect-status">
+          <p class="section-desc" id="google-connect-loading">Checking connection…</p>
+          <div id="google-connect-disconnected" style="display: none;">
+            <a href="#" id="link-google-connect" class="btn-secondary full-width"
+              style="text-decoration: none; text-align: center; display: block;">Connect Google account</a>
+          </div>
+          <div id="google-connect-connected" style="display: none;">
+            <p class="login-success" style="margin: 0 0 10px;">Connected as <span id="google-connect-email"></span></p>
+            <button type="button" id="btn-google-disconnect" class="btn-secondary full-width">Disconnect</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Checklist Panel: today's actionable items, always reachable via
+         the header's "N tasks left" chip. Pending items check off with an
+         AI supportive response + updated stats; resolved items (manual
+         check-offs and auto-detected resolves — a merged PR, a closed
+         ticket) sit aside so nothing you finished just disappears. ── -->
+    <div class="login-overlay modal-overlay" id="checklist-overlay" style="display: none;" role="dialog"
+      aria-label="Today's checklist">
+      <div class="login-card checklist-card">
+        <div class="checklist-header">
+          <h2>Today's checklist</h2>
+          <button type="button" id="btn-checklist-close" class="btn-icon" aria-label="Close">✕</button>
+        </div>
+        <p class="section-desc" style="margin-bottom: 10px;">Everything actionable from today's pulse, in one place.
+          Check something off as you finish it.</p>
+
+        <div class="checklist-progress">
+          <div class="checklist-progress-track">
+            <div class="checklist-progress-fill" id="checklist-progress-fill" style="width: 0%;"></div>
+          </div>
+          <span class="checklist-progress-label" id="checklist-progress-label">0 / 0</span>
+        </div>
+
+        <div id="checklist-pending-list" class="checklist-list"></div>
+        <div class="checklist-empty" id="checklist-empty-state" style="display: none;">
+          <h3>Nothing pending</h3>
+          <p>Everything from today's pulse is either done or hasn't landed yet.</p>
+        </div>
+
+        <div class="checklist-divider" id="checklist-resolved-divider" style="display: none;">Resolved</div>
+        <div id="checklist-resolved-list" class="checklist-list checklist-list-resolved"></div>
+      </div>
+    </div>
+
+    <!-- ── Meetings Panel: today's meeting load, always reachable via the
+         header's "N meetings today" chip — same data as the pulse card's
+         own "Today's meeting load" section, just reachable any time, not
+         only right when a pulse notification happens to be visible. Each
+         meeting links to the calendar event; one with a delivered dossier
+         shows it inline instead of just a bare flag. ── -->
+    <div class="login-overlay modal-overlay" id="meetings-overlay" style="display: none;" role="dialog"
+      aria-label="Today's meetings">
+      <div class="login-card checklist-card">
+        <div class="checklist-header">
+          <h2>Today's meetings</h2>
+          <button type="button" id="btn-meetings-close" class="btn-icon" aria-label="Close">✕</button>
+        </div>
+        <p class="section-desc" style="margin-bottom: 10px;">Today's meeting load, in order. A ready dossier shows right
+          under its meeting.</p>
+
+        <div id="meetings-list" class="checklist-list"></div>
+        <div class="checklist-empty" id="meetings-empty-state" style="display: none;">
+          <h3>Nothing on the calendar</h3>
+          <p>Clear for the rest of today.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Mentor Advisor Panel: on-demand short-term/long-term task advice,
+         reached via the "Ask your mentor" button next to the Accomplishments
+         ledger. Real-time LLM call each open, same context Friday review's
+         own synthesis is grounded in (goals/OKR progress, career goal,
+         skill distribution, stuck agenda items) — not a cached or scheduled
+         card. ── -->
+    <div class="login-overlay modal-overlay" id="mentor-advisor-overlay" style="display: none;" role="dialog"
+      aria-label="Mentor advice">
+      <div class="login-card checklist-card mentor-advisor-card">
+        <div class="checklist-header mentor-modal-header">
+          <div class="mentor-advisor-title-row">
+            <span class="mentor-advisor-icon">🧭</span>
+            <div>
+              <h2>Your Mentor Advisor</h2>
+              <span class="mentor-advisor-subtitle">Strategic guidance grounded in your OKRs, notes &amp; ledgers</span>
+            </div>
+          </div>
+          <div class="mentor-header-actions">
+            <button type="button" id="btn-mentor-advisor-refresh" class="btn-icon" title="Refresh advice"
+              aria-label="Refresh advice">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M23 4v6h-6M1 20v-6h6"></path>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+              </svg>
+            </button>
+            <button type="button" id="btn-mentor-advisor-close" class="btn-icon" aria-label="Close">✕</button>
+          </div>
+        </div>
+
+        <div class="mentor-advisor-body">
+          <div id="mentor-advisor-loading" class="mentor-loading-state" style="display: none;">
+            <div class="mentor-thinking-orb"></div>
+            <h3 id="mentor-loading-stage-title">Analyzing your workspace…</h3>
+            <p id="mentor-loading-stage-desc">Reading OKRs, 1:1 notes, commitments, and stuck items.</p>
+            <div class="mentor-loading-steps">
+              <div class="mentor-step-item active" id="mstep-1">
+                <span class="mstep-dot"></span>
+                <span>Gathering context from OKRs &amp; notes</span>
+              </div>
+              <div class="mentor-step-item" id="mstep-2">
+                <span class="mstep-dot"></span>
+                <span>Evaluating trajectory &amp; growth goals</span>
+              </div>
+              <div class="mentor-step-item" id="mstep-3">
+                <span class="mstep-dot"></span>
+                <span>Synthesizing actionable advice</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="mentor-advisor-error" class="checklist-empty" style="display: none;">
+            <h3>Couldn't get advice right now</h3>
+            <p id="mentor-advisor-error-text">Try again in a moment.</p>
+            <button type="button" id="btn-mentor-advisor-retry" class="btn-secondary" style="margin-top: 10px;">Try
+              again</button>
+          </div>
+
+          <div id="mentor-advisor-content" class="mentor-advisor-content" style="display: none;">
+            <div class="mentor-stream-status" id="mentor-stream-status" style="display: none;">
+              <span class="mentor-stream-indicator"></span>
+              <span class="mentor-stream-label">Streaming recommendations step by step…</span>
+            </div>
+
+            <div class="mentor-advice-section" id="section-short-term">
+              <div class="mentor-advice-section-header">
+                <h3 class="mentor-advice-heading">🎯 This Week's Focus</h3>
+                <span class="eyebrow eyebrow-short-term">Immediate Tasks</span>
+              </div>
+              <div id="mentor-advice-short-term" class="mentor-advice-items"></div>
+            </div>
+
+            <div class="mentor-advice-section" id="section-long-term">
+              <div class="mentor-advice-section-header">
+                <h3 class="mentor-advice-heading">🚀 Strategic Growth</h3>
+                <span class="eyebrow eyebrow-long-term">Quarterly Horizon</span>
+              </div>
+              <div id="mentor-advice-long-term" class="mentor-advice-items"></div>
+            </div>
+
+            <div class="mentor-advice-section mentor-rationale-section" id="section-rationale">
+              <div class="mentor-advice-section-header">
+                <h3 class="mentor-advice-heading">💡 Mentor Rationale</h3>
+              </div>
+              <div class="mentor-advice-rationale-box">
+                <p id="mentor-advice-rationale" class="mentor-advice-rationale-text"></p>
+              </div>
+            </div>
+
+            <div class="mentor-advisor-footer" id="mentor-advisor-footer">
+              <button type="button" id="btn-mentor-copy" class="btn-secondary btn-sm">📋 Copy advice</button>
+              <span class="mentor-footer-hint">Click "+ Add" on any item to save it directly to your workspace.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Page Tabs ── -->
+    <nav class="page-tabs" role="tablist" aria-label="Page">
+      <button id="page-tab-agenda" class="page-tab active" role="tab" aria-selected="true">Rolling Agenda</button>
+      <button id="page-tab-ledgers" class="page-tab" role="tab" aria-selected="false">Ledgers</button>
+      <button id="page-tab-dossiers" class="page-tab" role="tab" aria-selected="false">Pre-Meeting Dossiers</button>
+      <button id="page-tab-graph" class="page-tab" role="tab" aria-selected="false">Knowledge Graph</button>
+      <button id="page-tab-chat" class="page-tab" role="tab" aria-selected="false">Agent Chat</button>
+    </nav>
+
+    <!-- ── Main 3-Column Layout ── -->
+    <main class="main-layout" id="page-agenda">
+
+      <!-- ── Col 1: Agenda Items ── -->
+      <section class="agenda-column">
+
+        <!-- Which report's agenda to view — only shown if you manage at
+             least one report; everyone always has their own dashboard,
+             this only ever affects this Rolling Agenda tab's content. -->
+        <div class="agenda-report-picker-row" id="agenda-report-picker-row"
+          style="display: none; align-items: center; gap: 8px; margin-bottom: 12px;">
+          <label for="pair-switcher" style="font-size: 0.8rem; color: var(--text-secondary);">Viewing agenda
+            for:</label>
+          <select id="pair-switcher" class="select-input"></select>
+        </div>
+
+        <!-- Stale Items Consent Section -->
+        <div class="section-card consent-card-container" id="stale-section" style="display: none;">
+          <div class="card-header">
+            <div class="header-title">
+              <h2>Pending consent</h2>
+              <span class="eyebrow eyebrow-amber">Surfaced 5+ times</span>
+            </div>
+          </div>
+          <p class="section-desc">
+            These items have come up in 5 or more meetings without action. Choose whether to keep them on the agenda or
+            drop them.
+          </p>
+          <div id="stale-items-list" class="items-list"></div>
+        </div>
+
+        <!-- Active Agenda Items -->
+        <div class="section-card">
+          <div class="card-header">
+            <div class="header-title">
+              <h2>Agenda items</h2>
+            </div>
+            <div class="header-actions">
+              <span class="count-pill" id="item-count-pill">0 items</span>
+              <button id="btn-refresh" class="btn-icon" title="Refresh agenda" aria-label="Refresh agenda">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M23 4v6h-6M1 20v-6h6"></path>
+                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div id="agenda-items-list" class="items-list">
+            <div class="empty-state" id="empty-state">
+              <h3>No agenda items yet</h3>
+              <p>Add a note on the right, or trigger a meeting synthesis to populate the agenda.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Objectives & Key Results (Notion-sourced) -->
+        <div class="section-card">
+          <div class="card-header">
+            <div class="header-title">
+              <h2>Objectives &amp; Key Results</h2>
+            </div>
+            <span class="eyebrow" id="goals-eyebrow">Notion</span>
+          </div>
+          <p class="section-desc">Live OKRs pulled from Notion.</p>
+          <div id="goals-list" class="items-list">
+            <div class="empty-state" id="goals-empty-state">
+              <h3>No OKRs yet</h3>
+              <p>Nothing ingested from Notion for this person yet — run <code>mentor seed --live</code> after linking
+                their Notion email.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Career Goals (Notion-sourced) -->
+        <div class="section-card">
+          <div class="card-header">
+            <div class="header-title">
+              <h2>Career Goals</h2>
+            </div>
+            <span class="eyebrow" id="career-goals-eyebrow">Notion</span>
+          </div>
+          <p class="section-desc">Longer-horizon growth goals pulled from Notion, separate from this quarter's OKRs.</p>
+          <div id="career-goals-list" class="items-list">
+            <div class="empty-state" id="career-goals-empty-state">
+              <h3>No career goals yet</h3>
+              <p>Nothing ingested from Notion for this person yet — run <code>mentor seed --live</code> after linking
+                their Notion email.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Last Meeting Notes (Notion "1:1 Notes" db) -->
+        <div class="section-card">
+          <div class="card-header">
+            <div class="header-title">
+              <h2>Last meeting notes</h2>
+            </div>
+            <span class="eyebrow">Notion</span>
+          </div>
+          <p class="section-desc">The mentee's private 1:1 notes, most recent first.</p>
+          <div id="notes-list" class="items-list">
+            <div class="empty-state" id="notes-empty-state">
+              <h3>No notes yet</h3>
+              <p>Notes appear here once a post-meeting flow maps a transcript onto a Key Result.</p>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ── Col 2: Controls ── -->
+      <aside class="controls-column">
+
+        <!-- Quick-Add Note -->
+        <div class="section-card side-card">
+          <div class="card-header">
+            <div class="header-title">
+              <h2>Quick-add note</h2>
+            </div>
+            <kbd class="kbd-hint" title="Keyboard shortcut">⌘↵</kbd>
+          </div>
+          <p class="section-desc">Add a topic to the rolling agenda any time before the 1-on-1.</p>
+
+          <form id="form-add-note" class="control-form">
+            <div class="form-group">
+              <label for="note-text">Topic</label>
+              <textarea id="note-text" placeholder="e.g. Discuss Q3 career goals and team resource allocation" rows="3"
+                required maxlength="300"></textarea>
+              <div class="char-counter" id="char-counter">0 / 300</div>
+            </div>
+
+            <div class="form-group">
+              <label>Visibility</label>
+              <div class="visibility-selector" id="visibility-selector" role="group" aria-label="Visibility">
+                <button type="button" class="vis-option active" data-value="shared" id="vis-shared">Shared</button>
+                <button type="button" class="vis-option" data-value="manager_only" id="vis-manager">Manager
+                  only</button>
+                <button type="button" class="vis-option" data-value="report_only" id="vis-report">Report only</button>
+              </div>
+              <input type="hidden" id="note-visibility" value="shared" />
+            </div>
+
+            <button type="submit" class="btn-primary full-width" id="btn-submit-note">
+              Add to agenda
+            </button>
+          </form>
+        </div>
+
+        <!-- Post-Meeting Synthesis -->
+        <div class="section-card side-card">
+          <div class="card-header">
+            <div class="header-title">
+              <h2>Post-meeting synthesis</h2>
+            </div>
+            <span class="eyebrow">SequentialAgent</span>
+          </div>
+          <p class="section-desc">Runs Capture → Map OKRs → Synthesize → Deliver to extract decisions, commitments, and
+            phrasing.</p>
+
+          <!-- Pipeline Stage Indicator -->
+          <div class="pipeline-stages" id="pipeline-stages">
+            <div class="pipeline-stage" id="stage-capture">
+              <div class="stage-dot"></div>
+              <span>Capture</span>
+            </div>
+            <div class="pipeline-arrow" id="arrow-1">→</div>
+            <div class="pipeline-stage" id="stage-map-okrs">
+              <div class="stage-dot"></div>
+              <span>Map OKRs</span>
+            </div>
+            <div class="pipeline-arrow" id="arrow-2">→</div>
+            <div class="pipeline-stage" id="stage-synthesize">
+              <div class="stage-dot"></div>
+              <span>Synthesize</span>
+            </div>
+            <div class="pipeline-arrow" id="arrow-3">→</div>
+            <div class="pipeline-stage" id="stage-deliver">
+              <div class="stage-dot"></div>
+              <span>Deliver</span>
+            </div>
+          </div>
+
+          <!-- Live Step-by-Step Operation Status -->
+          <div class="pipeline-status-box" id="pipeline-status-box" style="display: none;">
+            <span class="pipeline-status-spinner"></span>
+            <span class="pipeline-status-text" id="pipeline-status-text">Step 1/4: Capturing transcript &amp;
+              notes…</span>
+          </div>
+
+          <form id="form-trigger-meeting" class="control-form">
+            <div class="form-group">
+              <label for="meeting-transcript-input">Meeting transcript</label>
+              <textarea id="meeting-transcript-input" class="select-input"
+                placeholder="Paste the transcript to run through Capture → Map OKRs → Synthesize → Deliver. Leave blank to try your connected Fathom recording instead."
+                rows="6"></textarea>
+            </div>
+
+            <div class="meeting-actions-row">
+              <button type="submit" class="btn-secondary full-width" id="btn-run-meeting">
+                <span id="meeting-btn-text">Run post-meeting flow</span>
+                <div class="spinner" id="meeting-spinner" style="display: none;"></div>
+              </button>
+              <button type="button" class="btn-danger-outline" id="btn-stop-meeting" style="display: none;"
+                title="Stop running pipeline">
+                <span>⏹ Stop</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+      </aside>
+
+
+
+      <!-- ── Col 3: Activity Log ── -->
+      <div class="log-column">
+        <div class="section-card log-card">
+          <div class="card-header">
+            <div class="header-title">
+              <h2>Activity log</h2>
+            </div>
+            <button class="btn-icon" id="btn-clear-log" title="Clear log" aria-label="Clear log">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6l-1 14H6L5 6"></path>
+              </svg>
+            </button>
+          </div>
+          <div class="log-entries" id="log-entries">
+            <div class="log-empty" id="log-empty-state">
+              <span>No activity yet</span>
+              <span class="log-empty-sub">Actions appear here in real time</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- ── Ledgers Page (Commitments & Accomplishments) ── -->
+    <main class="main-layout ledgers-layout" id="page-ledgers" style="display: none;">
+      <section class="agenda-column">
+        <div class="section-card">
+          <div class="card-header">
+            <div class="header-title">
+              <h2>Commitments</h2>
+            </div>
+            <span class="eyebrow">Owed ledger</span>
+          </div>
+          <p class="section-desc">Promises made, tracked until delivered.</p>
+          <form id="form-add-commitment" class="ledger-add-form">
+            <input type="text" id="commitment-description" class="select-input" placeholder="What did you promise?"
+              maxlength="300" required />
+            <input type="date" id="commitment-due-at" class="select-input ledger-add-date"
+              title="Due date (optional)" />
+            <button type="submit" class="btn-secondary" id="btn-add-commitment">+ Add</button>
+          </form>
+          <div id="commitments-list" class="items-list">
+            <div class="empty-state" id="commitments-empty-state">
+              <h3>No commitments yet</h3>
+              <p>Commitments recorded during a 1-on-1 (via append_ledger_item) appear here.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="agenda-column">
+        <div class="section-card">
+          <div class="card-header">
+            <div class="header-title">
+              <h2>Accomplishments</h2>
+            </div>
+            <span class="eyebrow">Done ledger</span>
+          </div>
+          <p class="section-desc">Things genuinely completed, most recent first.</p>
+          <button type="button" id="btn-mentor-advice" class="btn-secondary mentor-advice-btn" aria-haspopup="dialog">
+            🧭 Ask your mentor
+          </button>
+          <form id="form-add-accomplishment" class="ledger-add-form">
+            <input type="text" id="accomplishment-description" class="select-input" placeholder="What did you ship?"
+              maxlength="300" required />
+            <select id="accomplishment-goal" class="select-input ledger-add-goal">
+              <option value="">No linked goal</option>
+            </select>
+            <button type="submit" class="btn-secondary" id="btn-add-accomplishment">+ Add</button>
+          </form>
+          <div id="accomplishments-list" class="items-list">
+            <div class="empty-state" id="accomplishments-empty-state">
+              <h3>No accomplishments yet</h3>
+              <p>Accomplishments recorded during a 1-on-1 appear here.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ── Pre-Meeting Dossiers Page ── -->
+    <main class="main-layout dossiers-layout" id="page-dossiers" style="display: none;">
+      <section class="agenda-column">
+        <div class="section-card">
+          <div class="card-header">
+            <div class="header-title">
+              <h2>Pre-meeting dossiers</h2>
+            </div>
+            <span class="eyebrow">Dossier flow</span>
+          </div>
+          <p class="section-desc">Delivered pre-meeting prep, most recent first — read-only.</p>
+          <div id="dossiers-list" class="items-list">
+            <div class="empty-state" id="dossiers-empty-state">
+              <h3>No dossiers yet</h3>
+              <p>Dossiers appear here once the dossier flow delivers prep ahead of an upcoming event.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ── Knowledge Graph Page ── -->
+    <main class="main-layout graph-layout" id="page-graph" style="display: none;">
+      <section class="section-card graph-card">
+        <div class="card-header">
+          <div class="header-title">
+            <h2>Knowledge graph</h2>
+          </div>
+          <div class="header-actions">
+            <button id="btn-graph-zoom-in" class="btn-icon" title="Zoom In" aria-label="Zoom In">＋</button>
+            <button id="btn-graph-zoom-out" class="btn-icon" title="Zoom Out" aria-label="Zoom Out">－</button>
+            <button id="btn-graph-fit" class="btn-icon" title="Fit to screen" aria-label="Fit to screen">⛶</button>
+            <button id="btn-refresh-graph" class="btn-icon" title="Refresh graph" aria-label="Refresh graph">↻</button>
+          </div>
+        </div>
+        <p class="section-desc">Confirmed relationships are solid. Candidate relationships wait for your decision.</p>
+        <div class="graph-legend" aria-label="Graph legend">
+          <span><i class="legend-swatch legend-person"></i>People</span>
+          <span><i class="legend-swatch legend-identity"></i>Identities</span>
+          <span><i class="legend-swatch legend-event"></i>Events</span>
+          <span><i class="legend-swatch legend-message"></i>Messages</span>
+          <span><i class="legend-swatch legend-work-item"></i>Work items</span>
+          <span><i class="legend-line"></i>Confirmed</span>
+          <span><i class="legend-line legend-line-candidate"></i>Review</span>
+        </div>
+        <div class="graph-canvas" id="graph-canvas" aria-live="polite">
+          <div class="empty-state">
+            <h3>No graph data yet</h3>
+            <p>Ingest events, messages, or work items to build the graph.</p>
+          </div>
+        </div>
+        <div class="graph-details" id="graph-details">
+          <span class="graph-details-empty">Select a node to inspect its source and identity evidence.</span>
+        </div>
+      </section>
+      <aside class="controls-column">
+        <div class="section-card side-card">
+          <div class="card-header">
+            <div class="header-title">
+              <h2>Needs review</h2>
+            </div><span class="count-pill" id="graph-review-count">0</span>
+          </div>
+          <div id="graph-review-list" class="items-list">
+            <div class="empty-state">
+              <p>No candidate relationships.</p>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <!-- ── Agent Chat Page (talk to root_agent directly, like `adk web`) ── -->
+    <main class="main-layout chat-layout" id="page-chat" style="display: none;">
+      <section class="section-card chat-card">
+        <div class="card-header">
+          <div class="header-title">
+            <h2>Chat with root_agent</h2>
+          </div>
+          <div class="header-actions">
+            <span class="eyebrow" id="chat-session-eyebrow">No session yet</span>
+            <button id="btn-chat-reset" class="btn-icon" title="Reset session" aria-label="Reset session">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M23 4v6h-6M1 20v-6h6"></path>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <p class="section-desc">Talk to the same root_agent used in <code>adk web</code> — try "what's my pulse today?"
+          to trigger <code>get_morning_pulse</code>.</p>
+        <div id="chat-messages" class="chat-messages">
+          <div class="chat-empty" id="chat-empty-state">
+            <h3>No messages yet</h3>
+            <p>Send a message to start a real session against this server's root_agent (POST /run).</p>
+          </div>
+        </div>
+        <form id="form-chat" class="chat-input-row">
+          <textarea id="chat-input" placeholder="Ask the agent anything… (Enter to send, Shift+Enter for newline)"
+            rows="1" required></textarea>
+          <button type="submit" class="btn-primary" id="btn-chat-send">
+            <span id="chat-send-text">Send</span>
+            <div class="spinner" id="chat-send-spinner" style="display: none;"></div>
+          </button>
+        </form>
+      </section>
+
+      <aside class="controls-column">
+        <div class="section-card side-card">
+          <div class="card-header">
+            <div class="header-title">
+              <h2>About this chat</h2>
+            </div>
+          </div>
+          <p class="section-desc">
+            This talks directly to ADK's own <code>/run</code> endpoint against this
+            process's <code>root_agent</code> — the exact same agent and tools
+            (<code>get_weather</code>, <code>get_current_time</code>, <code>get_morning_pulse</code>)
+            you'd get from <code>adk web</code>, just embedded in this dashboard.
+          </p>
+          <p class="section-desc">
+            Runs as ADK's default dev user (<code>user</code>), so <code>get_morning_pulse</code>
+            resolves via the server's configured <code>WEBHOOK_OWNER_USER_ID</code> —
+            not the logged-in agenda identity above.
+          </p>
+        </div>
+      </aside>
+    </main>
+
+    <!-- Agent Bubble: live popup for a just-landed dossier or Friday review -->
+    <div id="agent-bubble-container" class="agent-bubble-container" aria-live="polite">
+      <div class="agent-bubble">
+        <div id="agent-orb" class="agent-orb"></div>
+        <div class="agent-bubble-body">
+          <div id="agent-bubble-label" class="agent-bubble-label">Mentor</div>
+          <div id="agent-bubble-title" class="agent-bubble-title"></div>
+          <div id="agent-bubble-text" class="agent-bubble-text"></div>
+          <div id="agent-bubble-pulse-card" class="agent-bubble-pulse-card" style="display: none;"></div>
+          <div class="agent-bubble-actions">
+            <button id="agent-bubble-play" class="agent-bubble-play" type="button">▶ Play</button>
+            <button id="agent-bubble-checklist" class="agent-bubble-play" type="button" style="display: none;">☑ View
+              checklist</button>
+            <button id="agent-bubble-dismiss" class="agent-bubble-dismiss" type="button" aria-label="Dismiss">✕</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <audio id="agent-bubble-audio" style="display:none;"></audio>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="toast-container" aria-live="polite"></div>
+  </div>
+
+  <script src="https://unpkg.com/cytoscape@3.31.2/dist/cytoscape.min.js"></script>
+  <script src="https://unpkg.com/marked@12.0.2/marked.min.js"></script>
+  <script src="https://unpkg.com/dompurify@3.1.6/dist/purify.min.js"></script>
+  <script src="/static/app.js"></script>
+</body>
+
+</html>

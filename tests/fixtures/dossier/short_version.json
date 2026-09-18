@@ -1,0 +1,10 @@
+{
+  "who": ["Alex Manager"],
+  "why_now": "Quick weekly sync, low signal volume this week.",
+  "talking_points": [
+    {"text": "Confirm sprint scope for next week", "source_link": "https://linear.app/x/2"}
+  ],
+  "promised_and_not_delivered": [],
+  "suggested_opener": null,
+  "short_version": true
+}

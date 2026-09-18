@@ -1,0 +1,89 @@
+name: normal_day
+description: >
+  A representative weekday: a 1:1 with a why-now (someone waiting), a blocked
+  work item due today, a Slack DM asking for a review, and one overdue
+  commitment. Enough candidates that L5 must narrow the field.
+
+owner:
+  id: usr_amal
+  tz: Europe/Paris
+  pulse_fire_time_local: "08:30"
+  late_cutoff_local: "21:00"
+
+now: "2026-08-07T07:00:00+02:00"
+
+people:
+  - id: person_sarah
+    canonical_name: Sarah Ben Youssef
+    primary_email: sarah@acme.com
+    is_self: false
+  - id: person_marc
+    canonical_name: Marc Dubois
+    primary_email: marc@acme.com
+    is_self: false
+
+events:
+  - external_id: evt-1
+    source: calendar
+    title: "1:1 with Sarah"
+    starts_at: "2026-08-07T09:00:00+02:00"
+    ends_at: "2026-08-07T09:30:00+02:00"
+    status: confirmed
+    actor_reference_key: "calendar:sarah@acme.com"
+  - external_id: evt-2
+    source: calendar
+    title: "Team standup"
+    starts_at: "2026-08-07T10:00:00+02:00"
+    ends_at: "2026-08-07T10:15:00+02:00"
+    status: confirmed
+    series_id: "series:standup"
+    actor_reference_key: "calendar:standup@acme.com"
+  - external_id: evt-3
+    source: calendar
+    title: "Design review"
+    starts_at: "2026-08-07T15:00:00+02:00"
+    ends_at: "2026-08-07T16:00:00+02:00"
+    status: confirmed
+    actor_reference_key: "calendar:marc@acme.com"
+
+work_items:
+  - external_id: MENT-214
+    source: linear
+    title: "Fix flaky roster test"
+    status: blocked
+    due_at: "2026-08-07T18:00:00+02:00"
+    updated_at: "2026-08-06T16:00:00+02:00"
+    actor_reference_key: "linear:sarah@acme.com"
+  - external_id: MENT-201
+    source: linear
+    title: "Write eval dataset for critic"
+    status: in_progress
+    due_at: "2026-08-14T18:00:00+02:00"
+    updated_at: "2026-08-05T12:00:00+02:00"
+    actor_reference_key: "linear:usr_amal"
+
+messages:
+  - external_id: "1699999999.000100"
+    source: slack
+    channel: C0123
+    sent_at: "2026-08-07T06:40:00+02:00"
+    is_dm: true
+    body_ref: "fixture://slack/1699999999.000100"
+    actor_reference_key: "slack:sarah@acme.com"
+
+commitments:
+  - description: "Send Sarah the design doc review"
+    promised_to_person_id: person_sarah
+    promised_at: "2026-08-05T10:00:00+02:00"
+    due_at: "2026-08-06T18:00:00+02:00"
+    status: open
+    source_reference_key: "slack:msg-old-1"
+
+expected:
+  shortlist_min: 5
+  shortlist_max: 8
+  # commitments never compete for the shortlist (they live in `owed`) — 5
+  # events+work_items total, all within the cap.
+  focus_candidates: [evt-1, evt-3, MENT-214]  # evt-3/Marc also resolves via the roster
+  degraded_sources: []
+  owed_count: 1

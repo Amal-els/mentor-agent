@@ -1,0 +1,74 @@
+{
+  "eval_cases": [
+    {
+      "eval_case_id": "synthesis_new_commitments_and_accomplishments",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "1-on-1 Transcript between Manager Alice and Report Bob:\nAlice: Great progress on the API migration this week, Bob!\nBob: Thanks! I finished the user auth endpoints yesterday. Also, I'll take care of the database indexing by Friday."
+          }
+        ]
+      },
+      "expected_outputs": {
+        "decisions": [],
+        "commitments": ["Bob to complete database indexing by Friday"],
+        "accomplishments": ["Bob completed user auth endpoints for API migration"]
+      }
+    },
+    {
+      "eval_case_id": "synthesis_dedup_existing_jira_blocker",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "1-on-1 Transcript:\nAlice: Any update on JIRA-104 (the auth blocker)?\nBob: Still waiting on security team review for JIRA-104."
+          }
+        ]
+      },
+      "existing_agenda_items": [
+        {
+          "id": "item-101",
+          "text": "JIRA-104: Blocked on security review",
+          "source": "jira",
+          "source_link": "https://jira.internal/browse/JIRA-104",
+          "surfaced_count": 2
+        }
+      ],
+      "expected_behavior": "Should bump surfaced_count on item-101 to 3 instead of creating duplicate item."
+    },
+    {
+      "eval_case_id": "synthesis_consent_threshold_trigger",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "1-on-1 Transcript:\nAlice: What about the legacy migration proposal?\nBob: We haven't had time to look at it again this week."
+          }
+        ]
+      },
+      "existing_agenda_items": [
+        {
+          "id": "item-102",
+          "text": "Legacy migration proposal review",
+          "source": "manual",
+          "source_link": "doc-proposal-102",
+          "surfaced_count": 4
+        }
+      ],
+      "expected_behavior": "Should increment surfaced_count to 5 and change status to pending_consent."
+    },
+    {
+      "eval_case_id": "ag_ui_signal_handler_keep_and_drop",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "AG-UI Signal: Keep item-102 (resets surfaced_count to 0 and status to open); Drop item-103 (sets status to resolved with dropped_via_consent history)."
+          }
+        ]
+      },
+      "expected_behavior": "Keep resets count to 0 and status to open; Drop sets status to resolved with history record."
+    }
+  ]
+}

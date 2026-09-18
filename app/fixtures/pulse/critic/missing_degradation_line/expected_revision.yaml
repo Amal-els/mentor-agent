@@ -1,0 +1,4 @@
+verdict: revise
+reasons:
+  - item_id: ""
+    reason: "context reports degraded_sources=['calendar'] but draft has no degradation_line"

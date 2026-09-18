@@ -1,0 +1,44 @@
+name: low_signal_day
+description: >
+  Nothing urgent — every item is base-level, no urgency or relevance bonus.
+  The ranker must still deterministically order and cut to 3; it does not
+  get to decide "nothing qualifies", that's the writer/critic's job via
+  score_terms, not the ranker's to refuse.
+
+shortlist:
+  - item_id: evt-a
+    score: 5.0
+    score_terms:
+      has_deadline: false
+      due_today: false
+      person_waiting: null
+  - item_id: evt-b
+    score: 5.0
+    score_terms:
+      has_deadline: false
+      due_today: false
+      person_waiting: null
+  - item_id: wi-a
+    score: 4.0
+    score_terms:
+      has_deadline: false
+      overdue: false
+      due_today: false
+      blocked: false
+      person_waiting: null
+  - item_id: wi-b
+    score: 4.0
+    score_terms:
+      has_deadline: false
+      overdue: false
+      due_today: false
+      blocked: false
+      person_waiting: null
+  - item_id: evt-c
+    score: 5.0
+    score_terms:
+      has_deadline: false
+      due_today: false
+      person_waiting: null
+
+expected_ordered_ids: [evt-a, evt-b, evt-c]

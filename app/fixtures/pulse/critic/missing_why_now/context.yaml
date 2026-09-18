@@ -1,0 +1,14 @@
+shortlist:
+  - item_id: evt-1
+    score: 8.5
+    score_terms:
+      has_deadline: true
+      person_waiting: "Sarah Ben Youssef"
+    candidate_focus: true
+  - item_id: MENT-214
+    score: 7.2
+    score_terms:
+      has_deadline: true
+      due_today: true
+    candidate_focus: true
+degraded_sources: []
